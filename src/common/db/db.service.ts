@@ -34,13 +34,13 @@ export class DbService {
     @InjectModel('transactions')
     private readonly transactionsModel: Model<any>
   ) {
-    DbService.connectSocket()
+    this.connectSocket()
     scheduleJob('0 1 * * * *', () => {
-      DbService.recheck()
+      this.recheck()
     })
   }
 
-  private static handleMessage(data: IMessage) {
+  private handleMessage(data: IMessage) {
     const service: Model<any> = this[
       resolveCollectionName(data?.collectionName)
     ]
@@ -62,7 +62,7 @@ export class DbService {
     }
   }
 
-  private static connectSocket() {
+  private connectSocket() {
     Constants.socket = io(Constants.globalUrl)
     Constants.socketStatus = 1
 
@@ -75,7 +75,7 @@ export class DbService {
     })
   }
 
-  private static recheck() {
+  private recheck() {
     if (Constants.socketStatus == 2) {
       this.connectSocket()
     }
