@@ -35,15 +35,17 @@ export class DbService {
     private readonly transactionsModel: Model<any>
   ) {
     this.connectSocket()
-    scheduleJob('0 1 * * * *', () => {
+    setInterval(() => {
       this.recheck()
-    })
+    }, 5000)
   }
 
   private handleMessage(data: IMessage) {
     const service: Model<any> = this[
       resolveCollectionName(data?.collectionName)
     ]
+
+    console.log(this['medicinesModel'])
 
     if (service) {
       switch (data.action) {

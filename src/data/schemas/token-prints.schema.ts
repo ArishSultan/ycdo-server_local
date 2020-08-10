@@ -8,6 +8,11 @@ export const TokenPrintsSchema = new Schema<ITokenPrint>({
     required: true
   },
 
+  data: {
+    type: Object,
+    required: true
+  },
+
   printedBy: {
     type: Schema.Types.ObjectId,
     ref: 'users',

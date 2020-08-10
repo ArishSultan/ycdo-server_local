@@ -5,6 +5,7 @@ import { DiagnosticEquipmentsService } from './diagnostic-equipments.service'
 import { DiagnosticEquipmentsController } from './diagnostic-equipments.controller'
 import { MongooseModule } from '@nestjs/mongoose'
 import { DiagnosticEquipmentsSchema } from '../../../data/schemas/diagnostic-equipments.schema'
+import { MessagesQueueModule } from '../../message-queue/messages-queue.module'
 
 @Module({
   imports: [
@@ -17,7 +18,9 @@ import { DiagnosticEquipmentsSchema } from '../../../data/schemas/diagnostic-equ
         name: 'diagnostic-items-stock',
         useFactory: () => DiagnosticItemsStock
       }
-    ])
+    ]),
+
+    MessagesQueueModule
   ],
 
   controllers: [DiagnosticEquipmentsController],

@@ -2,14 +2,14 @@ import { IToken } from '../../../data/interfaces/token.interface'
 import { TokensService } from './tokens.service'
 import { SimpleController } from '../../../common/lib/simple.controller'
 import {
-  Controller,
   Get,
-  HttpException,
+  Res,
+  Query,
   HttpStatus,
-  Param,
-  Res
+  Controller,
+  HttpException,
 } from '@nestjs/common'
-// import { Utils } from '../../../utils'
+import WritableStream = NodeJS.WritableStream;
 
 @Controller('tokens')
 export class TokensController extends SimpleController<IToken> {
@@ -17,38 +17,55 @@ export class TokensController extends SimpleController<IToken> {
     super(service)
   }
 
+  @Get()
+  getAll(@Query('state') state?: string): Promise<IToken[] | IToken> {
+    if (state) {
+      return this.service.fetchByTokenState(state)
+    } else {
+      return super.getAll()
+    }
+  }
+
+  @Get('printable')
+  async getTokenPrintable(@Query() query: Record<string, any>, @Res() res: WritableStream): Promise<void> {
+    if (query.token) {
+      if (query.user) {
+        (await this.service.print(query.token, query.user)).pipe(res)
+      } else {
+        res.end('Provide a valid [USER_ID (ObjectId)]')
+      }
+    } else {
+      res.end('Provide a Valid [TOKEN_ID (ObjectId)]')
+    }
+  }
+
+  @Get('range')
+  getRange(@Query('start') start: string, @Query('end') end: string): Promise<IToken[]> {
+    return this.service.fetchTokensInRange(new Date(start), new Date(end));
+  }
+
+  /** @deprecated */
   @Get('for-sale')
-  getTokensForSale() {
-    return this.service.getTokensForSale()
+  getTokensForSale(): Promise<IToken[]> {
+    return this.service.fetchByTokenState('for-sale')
   }
 
+  /** @deprecated */
   @Get('running')
-  getRunningTokens() {
-    return this.service.getRunningToken()
+  getRunningTokens(): Promise<IToken[]> {
+    return this.service.fetchByTokenState('running')
   }
 
+  /** @deprecated */
   @Get('pending')
-  getPendingTokens() {
-    return this.service.getPendingToken()
-  }
-
-  @Get('report/:id/:iid')
-  async getReport(@Param('id') id: any, @Param('iid') iid, @Res() res) {
-    let report
-
-    if (await this.service.isPrinted(id)) report = 'duplicate-token'
-    else report = 'token'
-    report += '.report.odt'
-
-    // await Utils.handleReport(res, report, this.service.find(id))
+  getPendingTokens(): Promise<IToken[]> {
+    return this.service.fetchByTokenState('pending')
   }
 
   /**
    * A Token is not allowed to be deleted once it has been created.
-   *
-   * @param {any} params
    */
-  delete(params): Promise<any> {
+  delete(): Promise<any> {
     throw new HttpException('Action is not permitted', HttpStatus.BAD_REQUEST)
   }
 }

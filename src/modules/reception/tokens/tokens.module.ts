@@ -7,23 +7,28 @@ import { TransactionsModule } from '../transactions/transactions.module'
 import { TokenPrintsSchema } from '../../../data/schemas/token-prints.schema'
 import { MedicinesModule } from '../../pharmacy/medicines/medicines.module'
 import { DiagnosticsModule } from '../../laboratory/diagnostics/diagnostics.module'
+import { MessagesQueueModule } from '../../message-queue/messages-queue.module'
+import { Schema } from 'mongoose';
+import { UsersModule } from '../../administrator/users/users.module';
 
 @Module({
   imports: [
     MongooseModule.forFeatureAsync([
       {
         name: 'tokens',
-        useFactory: () => TokensSchema
+        useFactory: (): Schema => TokensSchema
       },
       {
         name: 'token-prints',
-        useFactory: () => TokenPrintsSchema
+        useFactory: (): Schema => TokenPrintsSchema
       }
     ]),
 
+    UsersModule,
     MedicinesModule,
     DiagnosticsModule,
-    TransactionsModule
+    TransactionsModule,
+    MessagesQueueModule
   ],
   controllers: [TokensController],
   providers: [TokensService]

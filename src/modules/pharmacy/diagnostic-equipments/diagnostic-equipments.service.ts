@@ -1,12 +1,10 @@
 import { Model } from 'mongoose'
 import { Injectable } from '@nestjs/common'
 import { InjectModel } from '@nestjs/mongoose'
-import { SimpleService } from '../../../common/lib/simple.service'
 import { IDiagnosticEquipment } from '../../../data/interfaces/diagnostic-equipment.interface'
 import { StockPurchaseService } from '../stock-purchase.service'
 import { IDiagnosticItemsStock } from '../../../data/interfaces/diagnostic-items-stock.interface'
-import { ISurgicalItemsStock } from '../../../data/interfaces/surgical-items-stock.interface'
-import { ISurgicalItem } from '../../../data/interfaces/surgical-item.interface'
+import { MessagesQueueService } from '../../message-queue/messages-queue.service'
 
 @Injectable()
 export class DiagnosticEquipmentsService extends StockPurchaseService<
@@ -18,9 +16,10 @@ export class DiagnosticEquipmentsService extends StockPurchaseService<
     protected model: Model<IDiagnosticEquipment>,
 
     @InjectModel('diagnostic-items-stock')
-    protected purchaseModel: Model<IDiagnosticItemsStock>
+    protected purchaseModel: Model<IDiagnosticItemsStock>,
+    protected readonly messagesQueueService: MessagesQueueService
   ) {
-    super(model, purchaseModel)
+    super(model, purchaseModel, messagesQueueService)
   }
 
   async purchase(

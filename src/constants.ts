@@ -3,8 +3,9 @@ export const Constants = {
 
   socket: undefined,
   socketStatus: 2,
+  currentShift: 'Morning',
 
   branch: {
-    _id: '5f0c960726a3353404356eab'
+    _id: 'ac8c32064232da7681af7f30'
   }
 }

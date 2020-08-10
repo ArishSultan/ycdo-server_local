@@ -3,14 +3,16 @@ import { Injectable } from '@nestjs/common'
 import { InjectModel } from '@nestjs/mongoose'
 import { ITransaction } from '../../../data/interfaces/transaction.interface'
 import { SimpleService } from '../../../common/lib/simple.service'
+import { MessagesQueueService } from '../../message-queue/messages-queue.service'
 
 @Injectable()
 export class TransactionsService extends SimpleService<ITransaction> {
   constructor(
     @InjectModel('transactions')
-    protected readonly model: Model<ITransaction>
+    protected readonly model: Model<ITransaction>,
+    protected readonly messagesQueueService: MessagesQueueService
   ) {
-    super(model)
+    super(model, messagesQueueService)
   }
 
   async remainingAmount(id: string): Promise<number> {

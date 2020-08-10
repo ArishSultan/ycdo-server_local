@@ -82,6 +82,11 @@ export const PatientSchema = new Schema(
     createdBy: {
       type: Schema.Types.ObjectId,
       ref: 'users'
+    },
+
+    fmd: {
+      type: String,
+      required: false
     }
   },
   { timestamps: true }

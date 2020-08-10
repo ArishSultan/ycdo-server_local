@@ -1,17 +1,18 @@
 import * as moment from 'moment'
-import required from '../../../data/required'
-
-import { DocumentQuery, Model } from 'mongoose'
+import { Model } from 'mongoose'
 import { IToken } from '../../../data/interfaces/token.interface'
 import { Injectable } from '@nestjs/common'
 import { InjectModel } from '@nestjs/mongoose'
 import { ITokenPrint } from '../../../data/interfaces/token-print.interface'
 import { ITransaction } from '../../../data/interfaces/transaction.interface'
 import { SimpleService } from '../../../common/lib/simple.service'
-import { MedicinesService } from '../../pharmacy/medicines/medicines.service'
-import { DiagnosticsService } from '../../laboratory/diagnostics/diagnostics.service'
 import { TransactionsService } from '../transactions/transactions.service'
-import { IMedicine } from '../../../data/interfaces/medicine.interface'
+import { UsersService } from '../../administrator/users/users.service';
+import { Readable } from 'stream';
+import { printReport } from '../../../common/utils';
+import { Constants } from '../../../constants';
+import { IUser } from '../../../data/interfaces/user.interface';
+import { MessagesQueueService } from '../../message-queue/messages-queue.service';
 
 @Injectable()
 export class TokensService extends SimpleService<IToken> {
@@ -21,93 +22,93 @@ export class TokensService extends SimpleService<IToken> {
     @InjectModel('token-prints')
     protected printModel: Model<ITokenPrint>,
 
-    private readonly medicinesService: MedicinesService,
-    private readonly diagnosticsService: DiagnosticsService,
-    private readonly transactionsService: TransactionsService
+    private readonly usersService: UsersService,
+    private readonly transactionsService: TransactionsService,
+    protected readonly messagesQueueService: MessagesQueueService
   ) {
-    super(model)
+    super(model, messagesQueueService)
   }
 
-  public async isPrinted(id: string): Promise<boolean> {
-    return (await this.printModel.find().where('token', id).exec()).length > 0
+  public async print(token: string, user: string): Promise<Readable> {
+    let pdfFile
+
+    const _lastPrint = await this.printModel
+      .findOne()
+      .where('token', token)
+      .sort({ printedAt: -1 })
+      .exec()
+
+    if (_lastPrint) {
+      pdfFile = await printReport('checkup-token-duplicate.odt', _lastPrint.data)
+    } else {
+      const _token = (await this.model.findById(token)
+        .populate('branch')
+        .populate('patient')
+        .populate('checkedBy')
+        .populate('createdBy')
+        .populate('transaction')
+        .exec()) as any
+
+      const transaction = _token.transaction[_token.transaction.length -1]
+
+      const data = {
+        bname: _token.branch.name,
+        bcontact: _token.branch.contact,
+        number: _token.number,
+        createdAt: moment(_token.createdAt).format('ddd, MMM Do YYYY'),
+        pname: _token.patient.name,
+        pcnic: _token.patient.cnic,
+        ptype: _token.type,
+        page: moment().diff(new Date(_token.patient.dob), 'years'),
+        pcontact: _token.patient.contact,
+        paddress: _token.patient.address,
+        checkedBy: _token.checkedBy.name,
+        tokenBy: _token.createdBy.name,
+        year: new Date().getFullYear(),
+        total: (transaction.currentAmount || 0) + (transaction.remainingAmount || 0),
+        cashReceived: transaction.paidCash || 0,
+        cashReturned: transaction.returnedCash || 0,
+        printedAt: moment().format('ddd, MMM Do YYYY'),
+        printedBy: ((await this.usersService.find(user)) as IUser).name
+      }
+
+      pdfFile = await printReport('checkup-token.odt', data)
+      await this.printModel.create<any>({ token: token, printedBy: user, data })
+    }
+
+    return pdfFile
   }
 
-  public print(id: string, iid: string): Promise<ITokenPrint> {
-    return this.printModel.create<any>({ token: id, printedBy: iid })
+  public fetchTokensInRange(start: Date, end: Date): Promise<IToken[]> {
+    return this.model.find({
+      createdAt: { $gte: start, $lte: end }
+    }).populate('patient').exec()
   }
 
-  private _tokensForCheckup(state?: string) {
+  public fetchByTokenState(state: string): Promise<IToken[]> {
     return this.model
       .find()
       .where('state', state)
       .populate('medicines.medicine')
       .populate('diagnostics.diagnostic')
       .exec()
-    // const _tokens = []
-    //
-    // let tokensQuery: DocumentQuery<
-    //   IToken[],
-    //   IToken,
-    //   unknown
-    // > = this.model.find()
-    // if (state) tokensQuery = tokensQuery.where('state', state)
-    //
-    // const tokens: IToken[] = await tokensQuery.exec()
-    //
-    // for (let i = 0; i < tokens.length; ++i) {
-    //   const _medicines = []
-    //   const _diagnostics = []
-    //
-    //   for (const medicine of tokens[i].medicines) {
-    //     await _medicines.push({
-    //       // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    //       // @ts-ignore
-    //       ...(await this.medicinesService.find(medicine._id))._doc,
-    //       consumption: medicine.consumption
-    //     })
-    //   }
-    //
-    //   for (const diagnostic of tokens[i].diagnostics) {
-    //     await _diagnostics.push({
-    //       // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    //       // @ts-ignore
-    //       ...(await this.diagnosticsService.find(diagnostic._id))._doc,
-    //       result: diagnostic.result
-    //     })
-    //   }
-    //
-    //   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    //   const { medicines, diagnostics, ...data } = tokens[i]
-    //
-    //   _tokens.push({
-    //     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    //     // @ts-ignore
-    //     ...data._doc,
-    //     medicines: _medicines,
-    //     diagnostics: _diagnostics
-    //   })
-    // }
   }
 
-  public async getTokensForSale() {
-    return this._tokensForCheckup('for-sale')
+  public fetch(id?: string): Promise<IToken | IToken[]> {
+    if (id)
+      return this.model
+        .findById(id)
+        .populate('patient')
+        .populate('transaction')
+        .populate('checkedBy')
+        .populate('createdBy')
+        .exec()
+    return super.fetch()
   }
-
-  public async getRunningToken() {
-    return this._tokensForCheckup('running')
-  }
-
-  public async getPendingToken() {
-    return this._tokensForCheckup('pending')
-  }
-
-  public async getTestingToken() {
-    return this.model.find().where('state', 'testing').exec()
-  }
-
   public async create(document: IToken): Promise<IToken> {
     document.number = await this._generateNumber()
-    document.branch = required.branch
+    console.log('generated', document.number)
+    document.branch = Constants.branch._id
 
     document.transaction = [
       await this.transactionsService.create({
@@ -128,22 +129,9 @@ export class TokensService extends SimpleService<IToken> {
           }
         })(),
         detail: 'TOKEN GENERATION [First Turn]',
-        createdAt: new Date(Date.now())
       } as ITransaction)
     ]
     return super.create(document)
-  }
-
-  fetch(id?: string): Promise<IToken | IToken[]> {
-    if (id)
-      return this.model
-        .findById(id)
-        .populate('patient')
-        .populate('transaction')
-        .populate('checkedBy')
-        .populate('createdBy')
-        .exec()
-    return super.fetch()
   }
 
   private async _generateNumber() {
@@ -151,10 +139,15 @@ export class TokensService extends SimpleService<IToken> {
 
     if (!lastToken) return '00001'
 
-    const days = moment(Date.now()).diff(moment(lastToken.createdAt), 'days')
+    const days = moment(Date.now()).diff(moment(lastToken.createdAt), 'days', true)
+
 
     let number = 1
-    if (days < 1) number += parseInt(lastToken.number)
+    if (days < 1) {
+      console.log('number', lastToken.number)
+      console.log('parsed', parseInt(lastToken.number))
+      number += parseInt(lastToken.number)
+    }
 
     return Intl.NumberFormat('number', {
       minimumIntegerDigits: 5

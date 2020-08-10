@@ -4,6 +4,7 @@ import { UsersSchema } from '../../../data/schemas/users.schema'
 import { UsersService } from './users.service'
 import { MongooseModule } from '@nestjs/mongoose'
 import { UsersController } from './users.controller'
+import { MessagesQueueModule } from '../../message-queue/messages-queue.module'
 
 @Module({
   imports: [
@@ -12,7 +13,9 @@ import { UsersController } from './users.controller'
         name: 'users',
         useFactory: (): Schema => UsersSchema
       }
-    ])
+    ]),
+
+    MessagesQueueModule
   ],
   controllers: [UsersController],
   providers: [UsersService],

@@ -4,6 +4,7 @@ import { SurgicalItemsSchema } from '../../../data/schemas/surgical-items.schema
 import { SurgicalItemsService } from './surgical-items.service'
 import { SurgicalItemsController } from './surgical-items.controller'
 import { SurgicalItemsStockSchema } from '../../../data/schemas/surgical-items-stock.schema'
+import { MessagesQueueModule } from '../../message-queue/messages-queue.module'
 
 @Module({
   imports: [
@@ -16,7 +17,9 @@ import { SurgicalItemsStockSchema } from '../../../data/schemas/surgical-items-s
         name: 'surgical-items-stock',
         useFactory: () => SurgicalItemsStockSchema
       }
-    ])
+    ]),
+
+    MessagesQueueModule
   ],
 
   controllers: [SurgicalItemsController],

@@ -60,4 +60,6 @@ export interface IPatient extends Document {
    * @since 1.0.0
    */
   createdBy: string
+
+  fmd: string
 }

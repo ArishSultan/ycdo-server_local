@@ -3,6 +3,7 @@ import { MongooseModule } from '@nestjs/mongoose'
 import { TransactionsSchema } from '../../../data/schemas/transactions.schema'
 import { TransactionsService } from './transactions.service'
 import { TransactionsController } from './transactions.controller'
+import { MessagesQueueModule } from '../../message-queue/messages-queue.module'
 
 @Module({
   imports: [
@@ -11,7 +12,9 @@ import { TransactionsController } from './transactions.controller'
         name: 'transactions',
         useFactory: () => TransactionsSchema
       }
-    ])
+    ]),
+
+    MessagesQueueModule
   ],
   exports: [TransactionsService],
   providers: [TransactionsService],

@@ -4,6 +4,7 @@ import { MedicinesController } from './medicines.controller'
 import { MongooseModule } from '@nestjs/mongoose'
 import { MedicinesSchema } from '../../../data/schemas/medicines.schema'
 import { MedicinesStockSchema } from '../../../data/schemas/medicines-stock.schema'
+import { MessagesQueueModule } from '../../message-queue/messages-queue.module'
 
 @Module({
   imports: [
@@ -16,7 +17,9 @@ import { MedicinesStockSchema } from '../../../data/schemas/medicines-stock.sche
         name: 'medicine-stock',
         useFactory: () => MedicinesStockSchema
       }
-    ])
+    ]),
+
+    MessagesQueueModule
   ],
   providers: [MedicinesService],
   controllers: [MedicinesController],

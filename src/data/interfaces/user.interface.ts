@@ -8,7 +8,7 @@ export interface IUser extends Document {
   /**
    * @since 1.0.0
    */
-  image?: string
+  images?: string[]
 
   /**
    * @since 1.0.0

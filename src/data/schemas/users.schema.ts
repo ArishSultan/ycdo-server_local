@@ -9,10 +9,12 @@ export const UsersSchema = new Schema<IUser>({
   /**
    * @since 1.0.0
    */
-  image: {
-    type: String,
-    default: null
-  },
+  images: [{
+    type: new Schema({
+      path: String, name: String
+    }, { _id: false }),
+    default: []
+  }],
 
   /**
    * @since 1.0.0

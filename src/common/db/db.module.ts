@@ -13,6 +13,7 @@ import { DoctorsSchema } from '../../data/schemas/doctors.schema'
 import { PatientSchema } from '../../data/schemas/patient.schema'
 import { TransactionsSchema } from '../../data/schemas/transactions.schema'
 import { DbService } from './db.service'
+import { MessagesQueueItemSchema } from '../../modules/message-queue/messages-queue-item.schema'
 
 @Module({
   imports: [

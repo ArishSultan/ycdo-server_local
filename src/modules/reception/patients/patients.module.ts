@@ -3,6 +3,7 @@ import { PatientSchema } from '../../../data/schemas/patient.schema'
 import { MongooseModule } from '@nestjs/mongoose'
 import { PatientsService } from './patients.service'
 import { PatientsController } from './patients.controller'
+import { MessagesQueueModule } from '../../message-queue/messages-queue.module'
 
 @Module({
   imports: [
@@ -11,7 +12,9 @@ import { PatientsController } from './patients.controller'
         name: 'patients',
         useFactory: () => PatientSchema
       }
-    ])
+    ]),
+
+    MessagesQueueModule
   ],
   controllers: [PatientsController],
   providers: [PatientsService]

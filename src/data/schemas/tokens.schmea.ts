@@ -33,6 +33,14 @@ export const TokensSchema = new Schema(
     },
 
     /**
+     * @values checkup, pharmacy, laboratory
+     */
+    tokenType: {
+      type: String,
+      default: 'checkup'
+    },
+
+    /**
      * @since 1.0.0
      */
     patient: {
@@ -52,6 +60,7 @@ export const TokensSchema = new Schema(
               type: Schema.Types.ObjectId,
               ref: 'medicines'
             },
+            count: Number,
             consumption: String
           },
           { _id: false }
@@ -94,11 +103,11 @@ export const TokensSchema = new Schema(
       default: 'running'
     },
 
-    transaction: {
-      type: [Schema.Types.ObjectId],
+    transaction: [{
+      type: Schema.Types.ObjectId,
       ref: 'transactions',
       required: true
-    },
+    }],
 
     /**
      * @since 1.0.0

@@ -4,6 +4,7 @@ import { RoomsService } from './rooms.service'
 import { MongooseModule } from '@nestjs/mongoose'
 import { RoomsController } from './rooms.controller'
 import { RoomsSchema } from '../../../data/schemas/rooms.schema'
+import { MessagesQueueModule } from '../../message-queue/messages-queue.module'
 
 @Module({
   imports: [
@@ -12,7 +13,9 @@ import { RoomsSchema } from '../../../data/schemas/rooms.schema'
         name: 'rooms',
         useFactory: (): Schema => RoomsSchema
       }
-    ])
+    ]),
+
+    MessagesQueueModule
   ],
   providers: [RoomsService],
   controllers: [RoomsController]

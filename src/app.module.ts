@@ -9,10 +9,13 @@ import { BranchesModule } from './modules/administrator/branches/branches.module
 import { PharmacyModule } from './modules/pharmacy/pharmacy.module'
 import { ReceptionModule } from './modules/reception/reception.module'
 import { LaboratoryModule } from './modules/laboratory/laboratory.module'
+import { MessagesQueueModule } from './modules/message-queue/messages-queue.module'
 
 @Module({
   imports: [
     DbModule,
+
+    MessagesQueueModule,
     AuthModule,
 
     UsersModule,

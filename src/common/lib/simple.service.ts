@@ -1,18 +1,17 @@
 import { HttpException } from '@nestjs/common'
-import { Document, Model } from 'mongoose'
-import { IMessagesQueueItem } from '../../modules/message-queue/messages-queue-item.interface'
+import { Document, Model, mongo } from 'mongoose'
 import { Constants } from '../../constants'
+import { hashData } from '../utils'
+import { MessagesQueueService } from '../../modules/message-queue/messages-queue.service'
 
 /**
  * @template T
  * @author Arish Khan <arishsultan104@gmail.com>
  */
 export abstract class SimpleService<T extends Document> {
-  private socket
-
   protected constructor(
     protected readonly model: Model<T>,
-    private readonly messageModel?: Model<IMessagesQueueItem>
+    private readonly messageModel?: MessagesQueueService
   ) {}
 
   /**
@@ -58,38 +57,17 @@ export abstract class SimpleService<T extends Document> {
    */
   async create(document: T): Promise<T> {
     try {
+      document._id = SimpleService.generateId(document)
       const data = await this.model.create<any>(document)
 
-      Constants.socket.emit('message', {
-        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-        // @ts-ignore
-        user: document.requester,
-        branch: Constants.branch._id,
-        action: 'insert',
-
-        /**
-         * An additional message to elaborate the action
-         * NOTE: All the messages are hardcoded by the developer.
-         *
-         * @since 1.0.0
-         */
-        message: 'User CREATED An Object',
-
-        /**
-         * The data that is sent to the server. It is non null in case the
-         * `action` is `insert` or `update`
-         *
-         * @since 1.0.0
-         */
-        data: JSON.stringify(data),
-
-        /**
-         * The collection in which the change is to be made.
-         *
-         * @since 1.0.0
-         */
-        collectionName: this.model.modelName
-      })
+      const d = await this.messageModel?.create({
+        message: this._message(
+          'insert',
+          'User CREATED an Object',
+          document,
+          JSON.stringify(data)
+        )
+      } as any)
 
       return data
     } catch (error) {
@@ -116,10 +94,24 @@ export abstract class SimpleService<T extends Document> {
    * @param {T} document - Document to be Changed.
    * @returns {Promise<T>}
    */
-  change(document: T): Promise<T> {
+  async change(document: T): Promise<T> {
     try {
-      return this.model.findByIdAndUpdate(document._id, document).exec()
+      const data = await this.model
+        .findByIdAndUpdate(document._id, document)
+        .exec()
+
+      await this.messageModel?.create({
+        message: this._message(
+          'update',
+          'User UPDATED an Object',
+          document,
+          JSON.stringify(data)
+        )
+      } as any)
+
+      return data
     } catch (error) {
+      console.log(error)
       throw new HttpException(error, 500)
     }
   }
@@ -144,10 +136,17 @@ export abstract class SimpleService<T extends Document> {
    * @param {string} id - ObjectId of existing Document
    * @returns {boolean}
    */
-  remove(id?: string): Promise<Document> {
+  async remove(id?: string): Promise<Document> {
     try {
-      return this.model.findByIdAndRemove(id).exec()
+      const data = await this.model.findByIdAndRemove(id).exec()
+
+      await this.messageModel?.create({
+        message: this._message('delete', 'User DELETED an Object', null, null)
+      } as any)
+
+      return data
     } catch (error) {
+      console.log(error)
       throw new HttpException(error, 500)
     }
   }
@@ -175,7 +174,20 @@ export abstract class SimpleService<T extends Document> {
    *
    * @param {Document} document - Instance of Document to be created.
    */
-  // protected static generateId(document: Document) {
-  //   return new mongo.ObjectID(Utils.hash(JSON.stringify(document), 12))
-  // }
+  protected static generateId(document: Document): any {
+    return new mongo.ObjectID(hashData(JSON.stringify(document), 12))
+  }
+
+  private _message(action: string, message, document: any, data?: string) {
+    return {
+      data,
+      action,
+      message,
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
+      user: document?.requester,
+      branch: Constants.branch._id,
+      collectionName: this.model.modelName
+    }
+  }
 }

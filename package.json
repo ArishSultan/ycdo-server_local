@@ -28,6 +28,7 @@
     "@nestjs/passport": "^7.0.0",
     "@nestjs/platform-express": "^7.0.0",
     "@nestjs/websockets": "^7.2.0",
+    "blake2": "^4.0.1",
     "carbone": "^1.2.1",
     "internet-available": "^1.0.0",
     "moment": "^2.27.0",

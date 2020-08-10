@@ -7,6 +7,7 @@ import { StockPurchaseService } from '../stock-purchase.service'
 import { ISurgicalItemsStock } from '../../../data/interfaces/surgical-items-stock.interface'
 import { IMedicinesStock } from '../../../data/interfaces/medicines-stock.interface'
 import { IMedicine } from '../../../data/interfaces/medicine.interface'
+import { MessagesQueueService } from '../../message-queue/messages-queue.service'
 
 @Injectable()
 export class SurgicalItemsService extends StockPurchaseService<
@@ -18,9 +19,11 @@ export class SurgicalItemsService extends StockPurchaseService<
     protected model: Model<ISurgicalItem>,
 
     @InjectModel('surgical-items-stock')
-    protected purchaseModel: Model<ISurgicalItemsStock>
+    protected purchaseModel: Model<ISurgicalItemsStock>,
+
+    protected readonly messagesQueueService: MessagesQueueService
   ) {
-    super(model, purchaseModel)
+    super(model, purchaseModel, messagesQueueService)
   }
 
   async purchase(
