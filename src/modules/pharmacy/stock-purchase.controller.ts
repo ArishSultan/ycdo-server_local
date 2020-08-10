@@ -1,4 +1,3 @@
-import { Document } from 'mongoose'
 import { SimpleController } from '../../common/lib/simple.controller'
 import { Body, Get, Param, Post } from '@nestjs/common'
 import { StockPurchaseService } from './stock-purchase.service'

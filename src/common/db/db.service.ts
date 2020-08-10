@@ -1,6 +1,5 @@
 import { Model } from 'mongoose'
 import * as io from 'socket.io-client'
-import { scheduleJob } from 'node-schedule'
 import { Constants } from '../../constants'
 import { Injectable } from '@nestjs/common'
 import { InjectModel } from '@nestjs/mongoose'
