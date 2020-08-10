@@ -10,6 +10,8 @@ import { PharmacyModule } from './modules/pharmacy/pharmacy.module'
 import { ReceptionModule } from './modules/reception/reception.module'
 import { LaboratoryModule } from './modules/laboratory/laboratory.module'
 import { MessagesQueueModule } from './modules/message-queue/messages-queue.module'
+import { ServeStaticModule } from '@nestjs/serve-static';
+import { join } from 'path';
 
 @Module({
   imports: [
@@ -20,6 +22,10 @@ import { MessagesQueueModule } from './modules/message-queue/messages-queue.modu
 
     UsersModule,
     AdminModule,
+
+    ServeStaticModule.forRoot({
+      rootPath: join(process.cwd(), '..', 'face-images'),
+    }),
 
     BranchesModule,
     PharmacyModule,
